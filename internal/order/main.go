@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/freeman7728/gorder/common/config"
+	"github.com/freeman7728/gorder-v2/common/config"
 	"github.com/spf13/viper"
 	"log"
 )
