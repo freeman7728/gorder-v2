@@ -1,0 +1,24 @@
+syntax = "proto3";
+package stockpb;
+
+option go_package = "github.com/freeman7728/gorder-v2/internal/common/genproto/stockpb";
+
+import "google/protobuf/empty.proto";
+
+service StockService {
+  rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+  rpc CheckIfItemsInStock(CheckIfItemsInStockRequest) returns (CheckIfItemsInStockResponse);
+}
+
+message CheckIfItemsInStockRequest{
+
+}
+message CheckIfItemsInStockResponse{
+
+}
+message GetItemsRequest{
+
+}
+message GetItemsResponse{
+
+}
