@@ -1,10 +1,10 @@
-module github.com/freeman7728/gorder/order
+module github.com/freeman7728/gorder-v2/order
 
 go 1.22.8
 
-replace github.com/freeman7728/gorder/common => ../common
+replace github.com/freeman7728/gorder-v2/common => ../common
 
-require github.com/freeman7728/gorder/common v0.0.0-00010101000000-000000000000
+require github.com/freeman7728/gorder-v2/common v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
