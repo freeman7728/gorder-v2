@@ -7,4 +7,4 @@ order:
 stock:
   service-name: stock
   server-to-run: grpc
-  http-addr: 192.168.192.131:5003
+  grpc-addr: 192.168.192.131:5003

@@ -3,7 +3,7 @@ package stockpb;
 
 option go_package = "github.com/freeman7728/gorder-v2/internal/common/genproto/stockpb";
 
-import "google/protobuf/empty.proto";
+import "orderpb/order.proto";
 
 service StockService {
   rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
@@ -11,14 +11,15 @@ service StockService {
 }
 
 message CheckIfItemsInStockRequest{
-
+  repeated orderpb.ItemWithQuantity Items = 1;
 }
 message CheckIfItemsInStockResponse{
-
+  int32 InStock = 1;
+  repeated orderpb.Item Items = 2;
 }
 message GetItemsRequest{
-
+  repeated string ItemIDs = 1;
 }
 message GetItemsResponse{
-
+  repeated orderpb.Item Items = 1;
 }
