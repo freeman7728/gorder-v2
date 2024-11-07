@@ -1,14 +1,16 @@
 package main
 
 import (
+	"github.com/freeman7728/gorder-v2/order/app"
 	"github.com/gin-gonic/gin"
 )
 
 type HTTPServer struct {
+	app app.Application
 }
 
-func NewHTTPServer() *HTTPServer {
-	return &HTTPServer{}
+func NewHTTPServer(app app.Application) *HTTPServer {
+	return &HTTPServer{app: app}
 }
 
 func (H HTTPServer) PostCustomerCustomerIDOrder(c *gin.Context, customerID string) {
