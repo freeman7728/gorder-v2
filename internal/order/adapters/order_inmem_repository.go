@@ -14,16 +14,26 @@ type MemoryOrderRepository struct {
 	store []*domain.Order
 }
 
+var fakeData = []*domain.Order{}
+
 func NewMemoryOrderRepository() *MemoryOrderRepository {
+	s := make([]*domain.Order, 0)
+	s = append(s, &domain.Order{
+		ID:          "fake_id",
+		CustomerID:  "fake_customerID",
+		Status:      "fake_status",
+		PaymentLink: "fake_link",
+		Items:       nil,
+	})
 	return &MemoryOrderRepository{
 		lock:  sync.RWMutex{},
-		store: make([]*domain.Order, 0),
+		store: s,
 	}
 }
 
 func (m MemoryOrderRepository) Create(_ context.Context, o *domain.Order) (*domain.Order, error) {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 	newOrder := &domain.Order{
 		ID:          strconv.FormatInt(time.Now().Unix(), 10),
 		CustomerID:  o.CustomerID,
@@ -41,7 +51,7 @@ func (m MemoryOrderRepository) Create(_ context.Context, o *domain.Order) (*doma
 
 func (m MemoryOrderRepository) Get(_ context.Context, id, customerID string) (*domain.Order, error) {
 	m.lock.RLock()
-	defer m.lock.Unlock()
+	defer m.lock.RUnlock()
 	for _, o := range m.store {
 		if o.ID == id && o.CustomerID == customerID {
 			logrus.Debugf("memory_order_repo_found||found||id=%s||customerID=%s||res=%v", id, customerID, *o)
