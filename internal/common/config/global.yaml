@@ -8,5 +8,10 @@ stock:
   service-name: stock
   server-to-run: grpc
   grpc-addr: 192.168.192.131:5003
+payment:
+  service-name: payment
+  server-to-run: http
+  http-addr: 192.168.192.131:8284
+  grpc-addr: 192.168.192.131:5004
 
 stripe-key: "${STRIPE_KEY}"
