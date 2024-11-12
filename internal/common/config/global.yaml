@@ -8,3 +8,5 @@ stock:
   service-name: stock
   server-to-run: grpc
   grpc-addr: 192.168.192.131:5003
+
+stripe-key: "${STRIPE_KEY}"
