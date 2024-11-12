@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/freeman7728/gorder-v2/common/config"
+	"github.com/freeman7728/gorder-v2/common/discovery"
 	"github.com/freeman7728/gorder-v2/common/genproto/stockpb"
 	"github.com/freeman7728/gorder-v2/common/server"
 	"github.com/freeman7728/gorder-v2/stock/ports"
@@ -25,6 +26,15 @@ func main() {
 	defer cancel()
 	//创建application，传给svc
 	application := service.NewApplication(ctx)
+
+	deRegister, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = deRegister()
+	}()
+
 	switch serviceType {
 	case "http":
 		//TODO: Temporary disable

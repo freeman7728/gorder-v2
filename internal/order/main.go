@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/freeman7728/gorder-v2/common/config"
+	"github.com/freeman7728/gorder-v2/common/discovery"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/common/server"
 	"github.com/freeman7728/gorder-v2/order/ports"
@@ -27,6 +28,14 @@ func main() {
 
 	app, cleanup := service.NewApplication(ctx)
 	defer cleanup()
+
+	deRegister, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = deRegister()
+	}()
 
 	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
 		svc := ports.NewGRPCServer(app)
