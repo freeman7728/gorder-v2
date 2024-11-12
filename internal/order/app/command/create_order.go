@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"github.com/freeman7728/gorder-v2/common/decorator"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/order/app/query"
@@ -18,6 +19,7 @@ type CreateOrderResult struct {
 	OrderID string
 }
 
+// 取别名是为了更简洁直观地定义返回值
 type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult]
 
 type createOrderHandler struct {
@@ -42,26 +44,49 @@ func NewCreateOrderHandler(
 }
 
 func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*CreateOrderResult, error) {
-	err := c.stockGRPC.CheckIfItemInStock(ctx, cmd.Items)
-	resp, err := c.stockGRPC.GetItems(ctx, []string{"123"})
+	validItems, err := c.validate(ctx, cmd.Items)
 	if err != nil {
 		return nil, err
-	}
-	logrus.Infof("createOrderHandler||resp from stockGRPC.GetItems", resp)
-	var stockResponse []*orderpb.Item
-	for _, item := range cmd.Items {
-		stockResponse = append(stockResponse, &orderpb.Item{
-			ID:       item.ID,
-			Quantity: item.Quantity,
-		})
 	}
 	o, err := c.orderRepo.Create(ctx,
 		&domain.Order{
 			CustomerID: cmd.CustomerID,
-			Items:      stockResponse,
+			Items:      validItems,
 		})
+	logrus.Infof("input_order=%v", o)
 	if err != nil {
 		return nil, err
 	}
 	return &CreateOrderResult{OrderID: o.ID}, nil
+}
+
+func (c createOrderHandler) validate(ctx context.Context, items []*orderpb.ItemWithQuantity) ([]*orderpb.Item, error) {
+	if len(items) == 0 {
+		return nil, errors.New("must have one item")
+	}
+	//去重，也就是打包
+	items = packItems(items)
+	//检查仓库中是否有物品的数量小于订单的要求
+	resp, err := c.stockGRPC.CheckIfItemInStock(ctx, items)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Items, nil
+	//var ids []string
+	//for _, item := range items {
+	//	ids = append(ids, item.ID)
+	//}
+	//return c.stockGRPC.GetItems(ctx, ids)
+}
+
+func packItems(items []*orderpb.ItemWithQuantity) []*orderpb.ItemWithQuantity {
+	merged := make(map[string]int32)
+	for _, item := range items {
+		merged[item.ID] += item.Quantity
+	}
+	items = make([]*orderpb.ItemWithQuantity, 0)
+	for ID, quantity := range merged {
+		items = append(items, &orderpb.ItemWithQuantity{ID: ID, Quantity: quantity})
+	}
+	return items
 }

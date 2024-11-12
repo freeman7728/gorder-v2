@@ -9,6 +9,7 @@ import (
 
 type Repository interface {
 	GetItems(ctx context.Context, ids []string) ([]*orderpb.Item, error)
+	//CheckIfItemsInStock(ctx context.Context, items []*orderpb.ItemWithQuantity) ([]*orderpb.Item, error)
 }
 
 type NotFoundError struct {
