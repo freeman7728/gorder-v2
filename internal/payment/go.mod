@@ -4,8 +4,6 @@ go 1.22.8
 
 replace github.com/freeman7728/gorder-v2/common => ../common
 
-require github.com/freeman7728/gorder-v2/common v0.0.0-00010101000000-000000000000
-
 require (
 	github.com/bytedance/sonic v1.10.0-rc3 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect

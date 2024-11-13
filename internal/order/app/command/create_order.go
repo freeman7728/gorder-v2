@@ -2,11 +2,14 @@ package command
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/common/decorator"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/order/app/query"
 	domain "github.com/freeman7728/gorder-v2/order/domain/order"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,6 +28,7 @@ type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult
 type createOrderHandler struct {
 	orderRepo domain.Repository
 	stockGRPC query.StockService
+	channel   *amqp.Channel
 }
 
 func NewCreateOrderHandler(
@@ -32,12 +36,26 @@ func NewCreateOrderHandler(
 	logger *logrus.Entry,
 	metricsClient decorator.MetricsClient,
 	stockGRPC query.StockService,
+	channel *amqp.Channel,
 ) CreateOrderHandler {
 	if orderRepo == nil {
 		panic("nil orderRepo")
 	}
+	if logger == nil {
+		panic("nil logger")
+	}
+	if stockGRPC == nil {
+		panic("nil stockGRPC")
+	}
+	if channel == nil {
+		panic("nil channel")
+	}
 	return decorator.ApplyCommandDecorators[CreateOrder, *CreateOrderResult](
-		createOrderHandler{orderRepo: orderRepo, stockGRPC: stockGRPC},
+		createOrderHandler{
+			orderRepo: orderRepo,
+			stockGRPC: stockGRPC,
+			channel:   channel,
+		},
 		logger,
 		metricsClient,
 	)
@@ -54,6 +72,27 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 			Items:      validItems,
 		})
 	logrus.Infof("input_order=%v", o)
+	if err != nil {
+		return nil, err
+	}
+
+	//订单成功创建之后，绑定queue到exchange
+	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
+	marshaledOrder, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	err = c.channel.PublishWithContext(
+		ctx, "", q.Name, false, false,
+		amqp.Publishing{
+			ContentType:  "application/json",
+			DeliveryMode: amqp.Persistent,
+			Body:         marshaledOrder,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

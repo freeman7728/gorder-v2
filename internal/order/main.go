@@ -10,6 +10,7 @@ import (
 	"github.com/freeman7728/gorder-v2/order/ports"
 	"github.com/freeman7728/gorder-v2/order/service"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"log"
@@ -33,7 +34,7 @@ func main() {
 
 	deRegister, err := discovery.RegisterToConsul(ctx, serviceName)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 	defer func() {
 		_ = deRegister()
