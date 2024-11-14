@@ -65,8 +65,8 @@ func (m *MemoryOrderRepository) Update(ctx context.Context, o *domain.Order, upd
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	found := false
-	for i, o := range m.store {
-		if o.ID == o.ID && o.CustomerID == o.CustomerID {
+	for i, order := range m.store {
+		if o.ID == order.ID && o.CustomerID == order.CustomerID {
 			found = true
 			updateOrder, err := updateFn(ctx, o)
 			if err != nil {

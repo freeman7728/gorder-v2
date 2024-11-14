@@ -31,7 +31,7 @@ func NewOrder(ID string, customerID string, status string, paymentLink string, i
 		ID:          ID,
 		CustomerID:  customerID,
 		Status:      status,
-		PaymentLink: "",
+		PaymentLink: paymentLink,
 		Items:       items,
 	}, nil
 }
@@ -43,15 +43,5 @@ func (o Order) DomainToOrderpb() *orderpb.Order {
 		Status:      o.Status,
 		PaymentLink: o.PaymentLink,
 		Items:       o.Items,
-	}
-}
-
-func OrderpbToDomain(order orderpb.Order) *Order {
-	return &Order{
-		ID:          order.ID,
-		CustomerID:  order.CustomerID,
-		Status:      order.Status,
-		PaymentLink: order.PaymentLink,
-		Items:       order.Items,
 	}
 }
