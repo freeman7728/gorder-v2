@@ -43,7 +43,7 @@ func main() {
 
 	go consumer.NewConsumer(app).Listen(ch)
 
-	paymentHandler := NewPaymentHandler()
+	paymentHandler := NewPaymentHandler(ch)
 	switch serverType {
 	case "http":
 		server.RunHTTPServer(serviceName, paymentHandler.RegisterRoutes)
