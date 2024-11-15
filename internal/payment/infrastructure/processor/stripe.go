@@ -23,14 +23,10 @@ func NewStripeProcessor(apiKey string) *StripeProcessor {
 var successUrl = "http://localhost:8282"
 
 func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.Order) (string, error) {
-	// Set your secret key. Remember to switch to your live secret key in production.
-	// See your keys here: https://dashboard.stripe.com/apikeys
-	//stripe.Key = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
 	var items []*stripe.CheckoutSessionLineItemParams
 	for _, item := range order.Items {
 		items = append(items, &stripe.CheckoutSessionLineItemParams{
-			//Price:    stripe.String(item.PriceID),
-			Price:    stripe.String("price_1QLHRJEDLpH1wCU8fOBhRq2m"),
+			Price:    stripe.String(item.PriceID),
 			Quantity: stripe.Int64(int64(item.Quantity)),
 		})
 	}

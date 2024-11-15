@@ -33,12 +33,18 @@ func NewCheckIfItemsInStockHandler(
 	)
 }
 
+var stub = map[string]string{
+	"1": "price_1QLHRJEDLpH1wCU8fOBhRq2m",
+	"2": "price_1QLHBJEDLpH1wCU8GgjhtjRg",
+}
+
 func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*orderpb.Item, error) {
 	var res []*orderpb.Item
 	for _, i := range query.Items {
 		res = append(res, &orderpb.Item{
 			ID:       i.ID,
 			Quantity: i.Quantity,
+			PriceID:  stub[i.ID],
 		})
 	}
 	return res, nil

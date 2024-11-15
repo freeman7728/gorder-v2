@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/order/app"
 	"github.com/freeman7728/gorder-v2/order/app/command"
@@ -32,9 +33,10 @@ func (H HTTPServer) PostCustomerCustomerIDOrder(c *gin.Context, customerID strin
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "success",
-		"customer_id": req.CustomerID,
-		"order_id":    result.OrderID,
+		"message":      "success",
+		"customer_id":  req.CustomerID,
+		"order_id":     result.OrderID,
+		"redirect_url": fmt.Sprintf("http://centos2:8282/success?customerID=%s&orderID=%s", req.CustomerID, result.OrderID),
 	})
 }
 
@@ -47,5 +49,9 @@ func (H HTTPServer) GetCustomerCustomerIDOrderOrderID(c *gin.Context, customerID
 		c.JSON(http.StatusOK, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": o})
+	c.JSON(http.StatusOK, gin.H{"message": "success",
+		"data": gin.H{
+			"Order": o,
+		},
+	})
 }

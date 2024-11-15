@@ -46,6 +46,7 @@ func main() {
 	})
 
 	server.RunHTTPServer(serviceName, func(router *gin.Engine) {
+		router.StaticFile("/success", "../../public/success.html")
 		ports.RegisterHandlersWithOptions(router, NewHTTPServer(app), ports.GinServerOptions{
 			BaseURL:      "/api",
 			Middlewares:  nil,
