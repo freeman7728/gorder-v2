@@ -42,7 +42,6 @@ func main() {
 	}()
 
 	go consumer.NewConsumer(app).Listen(ch)
-
 	paymentHandler := NewPaymentHandler(ch)
 	switch serverType {
 	case "http":

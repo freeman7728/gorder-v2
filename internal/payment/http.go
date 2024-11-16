@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/payment/domain"
@@ -15,7 +14,6 @@ import (
 	"github.com/stripe/stripe-go/v81/webhook"
 	"io"
 	"net/http"
-	"os"
 )
 
 type PaymentHandler struct {
@@ -41,7 +39,7 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 		return
 	}
 
-	endpointSecret := viper.GetString("endpoint-stripe-secret")
+	endpointSecret := viper.GetString("ENDPOINT_STRIPE_SECRET")
 	logrus.Infof("endpointSecret: %s", endpointSecret)
 	// Pass the request body and Stripe-Signature header to ConstructEvent, along
 	// with the webhook signing key.
@@ -96,7 +94,7 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 			c.JSON(http.StatusOK, nil)
 		}
 	default:
-		fmt.Fprintf(os.Stderr, "Unhandled event type: %s\n", event.Type)
+		logrus.Infof("Unhandled event type: %s\n", event.Type)
 	}
 
 	c.Writer.WriteHeader(http.StatusOK)
