@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -9,7 +10,7 @@ func RunHTTPServer(serviceName string, wrapper func(router *gin.Engine)) {
 	//配置化
 	addr := viper.Sub(serviceName).GetString("http-addr")
 	if addr == "" {
-		//TODO: Warning Log
+		panic(errors.New("addr is empty"))
 	}
 	RunHTTPServerOnAddr(addr, wrapper)
 }

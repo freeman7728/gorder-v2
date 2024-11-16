@@ -38,9 +38,7 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 		c.JSON(http.StatusServiceUnavailable, err)
 		return
 	}
-
 	endpointSecret := viper.GetString("ENDPOINT_STRIPE_SECRET")
-	logrus.Infof("endpointSecret: %s", endpointSecret)
 	// Pass the request body and Stripe-Signature header to ConstructEvent, along
 	// with the webhook signing key.
 	event, err := webhook.ConstructEvent(payload, c.Request.Header.Get("Stripe-Signature"),

@@ -19,10 +19,6 @@ type CheckIfItemsInStock struct {
 
 type CheckIfItemsInStockHandler decorator.QueryHandler[CheckIfItemsInStock, []*orderpb.Item]
 
-type checkIfItemsInStockHandler struct {
-	stockRepo domain.Repository
-}
-
 var stub = map[string]*orderpb.Item{
 	"item_id": {
 		ID:       "foo_item",
