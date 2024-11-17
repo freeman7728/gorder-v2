@@ -7,8 +7,10 @@ import (
 	"github.com/freeman7728/gorder-v2/common/genproto/stockpb"
 	"github.com/freeman7728/gorder-v2/common/logging"
 	"github.com/freeman7728/gorder-v2/common/server"
+	"github.com/freeman7728/gorder-v2/common/tracing"
 	"github.com/freeman7728/gorder-v2/stock/ports"
 	"github.com/freeman7728/gorder-v2/stock/service"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"log"
@@ -26,6 +28,12 @@ func main() {
 	serviceType := viper.GetString("stock.server-to-run")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	shutdown, err := tracing.InitJaegerProvider(viper.GetString("jaeger.url"), serviceName)
+	defer shutdown(ctx)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 	//创建application，传给svc
 	application := service.NewApplication(ctx)
 

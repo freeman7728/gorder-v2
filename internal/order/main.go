@@ -8,6 +8,7 @@ import (
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/common/logging"
 	"github.com/freeman7728/gorder-v2/common/server"
+	"github.com/freeman7728/gorder-v2/common/tracing"
 	"github.com/freeman7728/gorder-v2/order/infrastructure/consumer"
 	"github.com/freeman7728/gorder-v2/order/ports"
 	"github.com/freeman7728/gorder-v2/order/service"
@@ -31,6 +32,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	shutdown, err := tracing.InitJaegerProvider(viper.GetString("jaeger.url"), serviceName)
+	defer shutdown(ctx)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 	app, cleanup := service.NewApplication(ctx)
 	defer cleanup()
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func RunHTTPServer(serviceName string, wrapper func(router *gin.Engine)) {
@@ -18,8 +19,14 @@ func RunHTTPServer(serviceName string, wrapper func(router *gin.Engine)) {
 func RunHTTPServerOnAddr(addr string, wrapper func(router *gin.Engine)) {
 	//使用匿名函数wrapper来实现不同的服务使用同一份代码
 	apiRouter := gin.New()
+	setMiddleWares(apiRouter)
 	wrapper(apiRouter)
 	if err := apiRouter.Run(addr); err != nil {
 		panic(err)
 	}
+}
+
+func setMiddleWares(r *gin.Engine) {
+	r.Use(gin.Recovery())
+	r.Use(otelgin.Middleware("default_server"))
 }
