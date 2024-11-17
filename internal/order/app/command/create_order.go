@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/common/decorator"
 	"github.com/freeman7728/gorder-v2/order/app/query"
@@ -12,6 +13,7 @@ import (
 	"github.com/freeman7728/gorder-v2/order/entity"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 type CreateOrder struct {
@@ -23,7 +25,7 @@ type CreateOrderResult struct {
 	OrderID string
 }
 
-// 取别名是为了更简洁直观地定义返回值
+// CreateOrderHandler 取别名是为了更简洁直观地定义返回值
 type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult]
 
 type createOrderHandler struct {
@@ -63,6 +65,11 @@ func NewCreateOrderHandler(
 }
 
 func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*CreateOrderResult, error) {
+	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	validItems, err := c.validate(ctx, cmd.Items)
 	if err != nil {
 		return nil, err
@@ -77,21 +84,21 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 		return nil, err
 	}
 
-	//订单成功创建之后，绑定queue到exchange
-	q, err := c.channel.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
-	if err != nil {
-		return nil, err
-	}
 	marshaledOrder, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
+	t := otel.Tracer("rabbitmq")
+	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", q.Name))
+	defer span.End()
+	header := broker.InjectRabbitMQHeaders(ctx)
 	err = c.channel.PublishWithContext(
 		ctx, "", q.Name, false, false,
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
 			Body:         marshaledOrder,
+			Headers:      header,
 		},
 	)
 	if err != nil {
@@ -101,6 +108,9 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 }
 
 func (c createOrderHandler) validate(ctx context.Context, items []*entity.ItemWithQuantity) ([]*entity.Item, error) {
+	t := otel.Tracer("validate")
+	ctx, span := t.Start(ctx, "checkItemIfInStock")
+	defer span.End()
 	if len(items) == 0 {
 		return nil, errors.New("must have one item")
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/payment/domain"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 type CreatePayment struct {
@@ -36,6 +37,10 @@ func NewCreatePaymentHandler(
 }
 
 func (c createPaymentHandler) Handle(ctx context.Context, cmd CreatePayment) (string, error) {
+	t := otel.Tracer("createPaymentHandler")
+	ctx, span := t.Start(ctx, "createPaymentHandler")
+	defer span.End()
+
 	link, err := c.processor.CreatePaymentLink(ctx, cmd.Order)
 	if err != nil {
 		return "", err

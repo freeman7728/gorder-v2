@@ -10,6 +10,7 @@ import (
 	domain "github.com/freeman7728/gorder-v2/order/domain/order"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -47,6 +48,9 @@ func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderReque
 }
 
 func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (_ *emptypb.Empty, err error) {
+	t := otel.Tracer("UpdateOrder")
+	ctx, span := t.Start(ctx, "UpdateOrder")
+	defer span.End()
 	logrus.Infof("order_grpc||request_in||request=%v", request)
 	order, err := domain.NewOrder(
 		request.ID,

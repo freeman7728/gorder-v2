@@ -3,12 +3,14 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/order/app"
 	"github.com/freeman7728/gorder-v2/order/app/command"
 	domain "github.com/freeman7728/gorder-v2/order/domain/order"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 type Consumer struct {
@@ -48,6 +50,11 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 
 // 接收到成功消费事件之后，去更新订单的状态
 func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.Channel) {
+	ctx := broker.ExtractRabbitMQHeaders(context.Background(), msg.Headers)
+	t := otel.Tracer("rabbitmq")
+	_, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
+	defer span.End()
+
 	o := &domain.Order{}
 	err := json.Unmarshal(msg.Body, o)
 	if err != nil {
@@ -55,7 +62,7 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 		_ = msg.Nack(false, false)
 		return
 	}
-	_, err = c.app.Commands.UpdateOrder.Handle(context.Background(), command.UpdateOrder{
+	_, err = c.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
 		Order: o,
 		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
 			if err := o.IsPaid(); err != nil {
@@ -69,5 +76,7 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 		//TODO: retry
 		return
 	}
+	span.AddEvent("order.updated")
 	_ = msg.Ack(false)
+	logrus.Info("order consume paid event success!")
 }

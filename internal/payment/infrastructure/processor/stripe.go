@@ -7,6 +7,7 @@ import (
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/checkout/session"
+	"go.opentelemetry.io/otel"
 )
 
 type StripeProcessor struct {
@@ -24,6 +25,10 @@ func NewStripeProcessor(apiKey string) *StripeProcessor {
 var successUrl = "http://centos2:8282/success"
 
 func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.Order) (string, error) {
+	t := otel.Tracer("CreatePaymentLink")
+	ctx, span := t.Start(ctx, "CreatePaymentLink")
+	defer span.End()
+
 	var items []*stripe.CheckoutSessionLineItemParams
 	for _, item := range order.Items {
 		items = append(items, &stripe.CheckoutSessionLineItemParams{

@@ -5,6 +5,7 @@ import (
 	"github.com/freeman7728/gorder-v2/common/decorator"
 	domain "github.com/freeman7728/gorder-v2/order/domain/order"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 type GetCustomerOrder struct {
@@ -34,6 +35,9 @@ func NewGetCustomerOrderHandler(
 }
 
 func (g getCustomerOrderHandler) Handle(ctx context.Context, query GetCustomerOrder) (*domain.Order, error) {
+	t := otel.Tracer("getCustomerOrderHandler")
+	ctx, span := t.Start(ctx, "getCustomerOrderHandler")
+	defer span.End()
 	o, err := g.orderRepo.Get(ctx, query.OrderID, query.CustomerID)
 	if err != nil {
 		return nil, err

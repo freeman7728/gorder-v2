@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/payment/domain"
@@ -12,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/webhook"
+	"go.opentelemetry.io/otel"
 	"io"
 	"net/http"
 )
@@ -78,10 +80,16 @@ func (h *PaymentHandler) handleWebhook(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, err.Error())
 				return
 			}
+			tr := otel.Tracer("rabbitmq")
+			mqCtx, span := tr.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
+			defer span.End()
+
+			headers := broker.InjectRabbitMQHeaders(mqCtx)
 			err = h.channel.PublishWithContext(ctx, broker.EventOrderPaid, "", false, false, amqp.Publishing{
 				ContentType:  "application/json",
 				DeliveryMode: amqp.Persistent,
 				Body:         marshalledOrder,
+				Headers:      headers,
 			})
 			if err != nil {
 				logrus.Infof("Error publishing order %v: %v\n", session.ID, err)
