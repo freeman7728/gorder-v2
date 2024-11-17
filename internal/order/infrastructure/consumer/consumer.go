@@ -55,7 +55,6 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 		_ = msg.Nack(false, false)
 		return
 	}
-
 	_, err = c.app.Commands.UpdateOrder.Handle(context.Background(), command.UpdateOrder{
 		Order: o,
 		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {

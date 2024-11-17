@@ -33,6 +33,7 @@ func main() {
 	defer cancel()
 
 	shutdown, err := tracing.InitJaegerProvider(viper.GetString("jaeger.url"), serviceName)
+	logrus.Infof("jaeger%s", viper.GetString("jaeger.url"))
 	defer shutdown(ctx)
 	if err != nil {
 		logrus.Fatal(err)

@@ -9,21 +9,22 @@ servers:
       hostname:
         default: 192.168.192.131:8282
 paths:
-  /customer/{customerID}/order/{orderID}:
+  /customer/{customer_id}/orders/{order_id}:
     get:
       description: "get order"
       parameters:
         - in: path
-          name: customerID
+          name: customer_id
           schema:
             type: string
           required: true
 
         - in: path
-          name: orderID
+          name: order_id
           schema:
             type: string
           required: true
+
       responses:
         '200':
           description: todo
@@ -31,27 +32,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Order'
+
         default:
           description: todo
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /customer/{customerID}/order:
+
+  /customer/{customer_id}/orders:
     post:
-      description: "post order"
+      description: "create order"
       parameters:
         - in: path
-          name: customerID
+          name: customer_id
           schema:
             type: string
           required: true
+
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateOrderRequest'
+
       responses:
         '200':
           description: todo
@@ -59,20 +64,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Order'
+
         default:
           description: todo
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     Order:
       type: object
+      required:
+        - id
+        - customer_id
+        - status
+        - items
+        - payment_link
       properties:
         id:
           type: string
-        customerID:
+        customer_id:
           type: string
         status:
           type: string
@@ -80,45 +93,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Item'
-        paymentLink:
+        payment_link:
           type: string
+
     Item:
       type: object
+      required:
+        - id
+        - name
+        - quantity
+        - price_id
       properties:
         id:
+          type: string
+        name:
           type: string
         quantity:
           type: integer
           format: int32
-        name:
+        price_id:
           type: string
-        priceID:
-          type: string
+
     Error:
       type: object
       properties:
         message:
           type: string
+
     CreateOrderRequest:
       type: object
       required:
-        - customerID
+        - customer_id
         - items
       properties:
-        customerID:
+        customer_id:
           type: string
         items:
           type: array
           items:
             $ref: '#/components/schemas/ItemWithQuantity'
+
     ItemWithQuantity:
       type: object
+      required:
+        - id
+        - quantity
       properties:
         id:
           type: string
         quantity:
           type: integer
           format: int32
-
 
 

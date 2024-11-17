@@ -115,7 +115,7 @@
         status: 'pending'
     };
     const getOrder = async() => {
-        const res = await fetch(`/api/customer/${customerID}/order/${orderID}`);
+        const res = await fetch(`/api/customer/${customerID}/orders/${orderID}`);
         const data = await res.json();
         console.log("data = ", data)
         /*

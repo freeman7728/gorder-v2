@@ -7,6 +7,8 @@ import (
 	"github.com/freeman7728/gorder-v2/order/app"
 	"github.com/freeman7728/gorder-v2/order/app/command"
 	"github.com/freeman7728/gorder-v2/order/app/query"
+	"github.com/freeman7728/gorder-v2/order/convertor"
+	_ "github.com/freeman7728/gorder-v2/order/convertor"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,7 +21,7 @@ func NewHTTPServer(app app.Application) *HTTPServer {
 	return &HTTPServer{app: app}
 }
 
-func (H HTTPServer) PostCustomerCustomerIDOrder(c *gin.Context, customerID string) {
+func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID string) {
 	ctx, span := tracing.Start(c, "PostCustomerCustomerIDOrder")
 	defer span.End()
 	var req orderpb.CreateOrderRequest
@@ -29,7 +31,7 @@ func (H HTTPServer) PostCustomerCustomerIDOrder(c *gin.Context, customerID strin
 	}
 	result, err := H.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
 		CustomerID: req.CustomerID,
-		Items:      req.Items,
+		Items:      convertor.NewItemWithQuantityConvertor().ProtosToEntities(req.Items),
 	})
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err})
@@ -45,12 +47,12 @@ func (H HTTPServer) PostCustomerCustomerIDOrder(c *gin.Context, customerID strin
 	})
 }
 
-func (H HTTPServer) GetCustomerCustomerIDOrderOrderID(c *gin.Context, customerID string, orderID string) {
+func (H HTTPServer) GetCustomerCustomerIdOrdersOrderId(c *gin.Context, customerId string, orderId string) {
 	ctx, span := tracing.Start(c, "GetCustomerCustomerIDOrderOrderID")
 	defer span.End()
 	o, err := H.app.Queries.GetCustomerOrder.Handle(ctx, query.GetCustomerOrder{
-		CustomerID: customerID,
-		OrderID:    orderID,
+		CustomerID: customerId,
+		OrderID:    orderId,
 	})
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err})

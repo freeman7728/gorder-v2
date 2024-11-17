@@ -6,16 +6,17 @@ import (
 	"errors"
 	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/common/decorator"
-	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/order/app/query"
+	"github.com/freeman7728/gorder-v2/order/convertor"
 	domain "github.com/freeman7728/gorder-v2/order/domain/order"
+	"github.com/freeman7728/gorder-v2/order/entity"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
 
 type CreateOrder struct {
 	CustomerID string
-	Items      []*orderpb.ItemWithQuantity
+	Items      []*entity.ItemWithQuantity
 }
 
 type CreateOrderResult struct {
@@ -99,33 +100,28 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	return &CreateOrderResult{OrderID: o.ID}, nil
 }
 
-func (c createOrderHandler) validate(ctx context.Context, items []*orderpb.ItemWithQuantity) ([]*orderpb.Item, error) {
+func (c createOrderHandler) validate(ctx context.Context, items []*entity.ItemWithQuantity) ([]*entity.Item, error) {
 	if len(items) == 0 {
 		return nil, errors.New("must have one item")
 	}
 	//去重，也就是打包
 	items = packItems(items)
 	//检查仓库中是否有物品的数量小于订单的要求
-	resp, err := c.stockGRPC.CheckIfItemInStock(ctx, items)
+	resp, err := c.stockGRPC.CheckIfItemInStock(ctx, convertor.NewItemWithQuantityConvertor().EntitiesToProtos(items))
 	if err != nil {
 		return nil, err
 	}
-	return resp.Items, nil
-	//var ids []string
-	//for _, item := range items {
-	//	ids = append(ids, item.ID)
-	//}
-	//return c.stockGRPC.GetItems(ctx, ids)
+	return convertor.NewItemConvertor().ProtosToEntities(resp.Items), nil
 }
 
-func packItems(items []*orderpb.ItemWithQuantity) []*orderpb.ItemWithQuantity {
+func packItems(items []*entity.ItemWithQuantity) []*entity.ItemWithQuantity {
 	merged := make(map[string]int32)
 	for _, item := range items {
 		merged[item.ID] += item.Quantity
 	}
-	items = make([]*orderpb.ItemWithQuantity, 0)
+	items = make([]*entity.ItemWithQuantity, 0)
 	for ID, quantity := range merged {
-		items = append(items, &orderpb.ItemWithQuantity{ID: ID, Quantity: quantity})
+		items = append(items, &entity.ItemWithQuantity{ID: ID, Quantity: quantity})
 	}
 	return items
 }
