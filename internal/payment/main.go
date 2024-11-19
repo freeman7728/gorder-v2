@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/freeman7728/gorder-v2/common/broker"
-	"github.com/freeman7728/gorder-v2/common/config"
+	_ "github.com/freeman7728/gorder-v2/common/config"
 	"github.com/freeman7728/gorder-v2/common/logging"
 	"github.com/freeman7728/gorder-v2/common/server"
 	"github.com/freeman7728/gorder-v2/common/tracing"
@@ -11,14 +11,10 @@ import (
 	"github.com/freeman7728/gorder-v2/payment/service"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
 )
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func main() {

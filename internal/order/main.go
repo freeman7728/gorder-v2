@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/freeman7728/gorder-v2/common/broker"
-	"github.com/freeman7728/gorder-v2/common/config"
+	_ "github.com/freeman7728/gorder-v2/common/config"
 	"github.com/freeman7728/gorder-v2/common/discovery"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/common/logging"
@@ -16,14 +16,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"log"
 )
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func main() {

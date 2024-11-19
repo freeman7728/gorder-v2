@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/freeman7728/gorder-v2/common/config"
+	_ "github.com/freeman7728/gorder-v2/common/config"
 	"github.com/freeman7728/gorder-v2/common/discovery"
 	"github.com/freeman7728/gorder-v2/common/genproto/stockpb"
 	"github.com/freeman7728/gorder-v2/common/logging"
@@ -18,9 +18,6 @@ import (
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func main() {
