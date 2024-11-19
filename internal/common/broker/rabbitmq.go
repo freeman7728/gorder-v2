@@ -8,6 +8,11 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
+var (
+	DLX = "dlx"
+	DLQ = "dlq"
+)
+
 func Connect(user, password, host, port string) (*ampq.Channel, func() error) {
 	address := fmt.Sprintf("amqp://%s:%s@%s:%s/", user, password, host, port)
 	conn, err := ampq.Dial(address)
@@ -26,7 +31,27 @@ func Connect(user, password, host, port string) (*ampq.Channel, func() error) {
 	if err != nil {
 		logrus.Fatal(err)
 	}
+	if err = createDLX(ch); err != nil {
+		logrus.Fatal(err)
+	}
 	return ch, ch.Close
+}
+
+func createDLX(ch *ampq.Channel) error {
+	q, err := ch.QueueDeclare("share_queue", true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+	err = ch.ExchangeDeclare(DLX, "fanout", true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+	err = ch.QueueBind(q.Name, EventOrderCreated, DLX, false, nil)
+	if err != nil {
+		return err
+	}
+	_, err = ch.QueueDeclare(DLQ, true, false, false, false, nil)
+	return err
 }
 
 type RabbitMQHeaderCarrier map[string]interface{}
