@@ -73,7 +73,11 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 	})
 	if err != nil {
 		logrus.Infof("error updating order,orderID=%s,err= %v", o.ID, err)
-		//TODO: retry
+		err := broker.HandleRetry(ctx, channel, &msg)
+		if err != nil {
+			logrus.Warnf("retry_error,error Handling retry ,messageID=%s,err=%v", msg.MessageId, err)
+		}
+		_ = msg.Nack(false, false)
 		return
 	}
 	span.AddEvent("order.updated")

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/freeman7728/gorder-v2/common"
 	client "github.com/freeman7728/gorder-v2/common/client/order"
-	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/order/app"
 	"github.com/freeman7728/gorder-v2/order/app/command"
 	"github.com/freeman7728/gorder-v2/order/app/dto"
@@ -25,7 +24,7 @@ func NewHTTPServer(app app.Application) *HTTPServer {
 
 func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID string) {
 	var (
-		req  orderpb.CreateOrderRequest
+		req  client.CreateOrderRequest
 		err  error
 		resp dto.CreateOrderResponse
 	)
@@ -36,16 +35,16 @@ func (H HTTPServer) PostCustomerCustomerIdOrders(c *gin.Context, customerID stri
 		return
 	}
 	r, err := H.app.Commands.CreateOrder.Handle(c.Request.Context(), command.CreateOrder{
-		CustomerID: req.CustomerID,
-		Items:      convertor.NewItemWithQuantityConvertor().ProtosToEntities(req.Items),
+		CustomerID: req.CustomerId,
+		Items:      convertor.NewItemWithQuantityConvertor().ClientsToEntities(req.Items),
 	})
 	if err != nil {
 		return
 	}
 	resp = dto.CreateOrderResponse{
 		OrderID:     r.OrderID,
-		CustomerID:  req.CustomerID,
-		RedirectURL: fmt.Sprintf("http://centos2:8282/success?customerID=%s&orderID=%s", req.CustomerID, r.OrderID),
+		CustomerID:  req.CustomerId,
+		RedirectURL: fmt.Sprintf("http://centos2:8282/success?customerID=%s&orderID=%s", req.CustomerId, r.OrderID),
 	}
 }
 

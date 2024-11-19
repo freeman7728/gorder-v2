@@ -53,13 +53,19 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 	err := json.Unmarshal(msg.Body, o)
 	if err != nil {
 		logrus.Warnf("fail to unmarshal msg to order,err=%v", err)
-		_ = msg.Nack(false, false)
 		return
 	}
+	//TODO: Delete This
+	//logrus.Infof("Test retry,sleep for 5s,kill order now")
+	//time.Sleep(5 * time.Second)
 	_, err = c.app.Commands.CreatePayment.Handle(ctx, command.CreatePayment{Order: o})
 	if err != nil {
-		//TODO: retry
 		logrus.Warnf("fail to create paymentLink for order,err=%v", err)
+		logrus.Infof("error updating order,orderID=%s,err= %v", o.ID, err)
+		err := broker.HandleRetry(ctx, channel, &msg)
+		if err != nil {
+			logrus.Warnf("retry_error,error Handling retry ,messageID=%s,err=%v", msg.MessageId, err)
+		}
 		_ = msg.Nack(false, false)
 		return
 	}
