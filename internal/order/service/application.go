@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/freeman7728/gorder-v2/common/broker"
 	grpcClient "github.com/freeman7728/gorder-v2/common/client"
 	"github.com/freeman7728/gorder-v2/common/metrics"
@@ -13,6 +14,10 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"time"
 )
 
 func NewApplication(ctx context.Context) (app.Application, func()) {
@@ -37,7 +42,9 @@ func NewApplication(ctx context.Context) (app.Application, func()) {
 }
 
 func newApplication(ctx context.Context, stockGRPC query.StockService, ch *amqp.Channel) app.Application {
-	orderRepo := adapters.NewMemoryOrderRepository()
+	//orderRepo := adapters.NewMemoryOrderRepository()
+	mongoClient := newMongoClient()
+	orderRepo := adapters.NewOrderRepositoryMongo(mongoClient)
 	logger := logrus.NewEntry(logrus.StandardLogger())
 	metricsClient := metrics.TodoMetrics{}
 	return app.Application{
@@ -49,4 +56,24 @@ func newApplication(ctx context.Context, stockGRPC query.StockService, ch *amqp.
 			GetCustomerOrder: query.NewGetCustomerOrderHandler(orderRepo, logger, metricsClient),
 		},
 	}
+}
+
+func newMongoClient() *mongo.Client {
+	uri := fmt.Sprintf(
+		"mongodb://%s:%s@%s:%s",
+		viper.GetString("mongo.user"),
+		viper.GetString("mongo.password"),
+		viper.GetString("mongo.host"),
+		viper.GetString("mongo.port"),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	c, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	if err != nil {
+		panic(err)
+	}
+	if err = c.Ping(ctx, readpref.Primary()); err != nil {
+		panic(err)
+	}
+	return c
 }
