@@ -55,8 +55,17 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 	_, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
 	defer span.End()
 
+	var err error
+	defer func() {
+		if err != nil {
+			_ = msg.Nack(false, false)
+		} else {
+			_ = msg.Ack(false)
+		}
+	}()
+
 	o := &domain.Order{}
-	err := json.Unmarshal(msg.Body, o)
+	err = json.Unmarshal(msg.Body, o)
 	if err != nil {
 		logrus.Infof("error unmarshalling msg to domain.Order: %s", err)
 		_ = msg.Nack(false, false)
@@ -81,6 +90,5 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 		return
 	}
 	span.AddEvent("order.updated")
-	_ = msg.Ack(false)
 	logrus.Info("order consume paid event success!")
 }

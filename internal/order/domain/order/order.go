@@ -37,6 +37,7 @@ func NewOrder(ID string, customerID string, status string, paymentLink string, i
 		Items:       items,
 	}, nil
 }
+
 func NewPendingOrder(customerId string, items []*entity.Item) (*Order, error) {
 	if items == nil {
 		return nil, errors.New("empty items")

@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/otel"
 	"time"
 )
 
@@ -56,6 +57,10 @@ func (r *OrderRepositoryMongo) Create(ctx context.Context, order *domain.Order) 
 	defer func() {
 		r.logWithTag("create", err, created)
 	}()
+
+	t := otel.Tracer("write_to_mongo")
+	ctx, span := t.Start(ctx, "write_to_mongo")
+	defer span.End()
 
 	write := r.marshalToModel(order)
 	res, err := r.collection().InsertOne(ctx, write)
