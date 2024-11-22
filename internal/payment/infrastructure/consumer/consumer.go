@@ -55,9 +55,6 @@ func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, channel *amqp.
 		logrus.Warnf("fail to unmarshal msg to order,err=%v", err)
 		return
 	}
-	//TODO: Delete This
-	//logrus.Infof("Test retry,sleep for 5s,kill order now")
-	//time.Sleep(5 * time.Second)
 	_, err = c.app.Commands.CreatePayment.Handle(ctx, command.CreatePayment{Order: o})
 	if err != nil {
 		logrus.Warnf("fail to create paymentLink for order,err=%v", err)

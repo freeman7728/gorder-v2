@@ -73,7 +73,7 @@ func (r *OrderRepositoryMongo) Get(ctx context.Context, id, customerID string) (
 	}()
 	read := &orderModel{}
 	mongoID, _ := primitive.ObjectIDFromHex(id)
-	cond := bson.M{"_id": mongoID}
+	cond := bson.M{"_id": mongoID, "customer_id": customerID}
 	err = r.collection().FindOne(ctx, cond).Decode(read)
 	if err != nil {
 		return

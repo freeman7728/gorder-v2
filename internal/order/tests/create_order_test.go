@@ -50,7 +50,7 @@ func TestCreateOrder_validParams(t *testing.T) {
 		CustomerId: "123",
 		Items: []sw.ItemWithQuantity{
 			{
-				Id:       "test-item-1",
+				Id:       "prod_RCftmpMkL9wnSM",
 				Quantity: 10,
 			},
 		},
