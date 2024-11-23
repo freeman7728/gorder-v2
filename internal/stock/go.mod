@@ -8,7 +8,6 @@ require (
 	github.com/freeman7728/gorder-v2/common v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.19.0
-	github.com/stripe/stripe-go/v81 v81.1.0
 	google.golang.org/grpc v1.68.0
 )
 
@@ -61,6 +60,7 @@ require (
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stripe/stripe-go/v81 v81.1.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
