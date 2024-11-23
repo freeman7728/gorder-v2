@@ -22,7 +22,7 @@ var httpStatusCodeCounter = prometheus.NewCounterVec(
 		Help: "Count http status code",
 	}, []string{"status_code"})
 
-func main() {
+func prometheusFunc() {
 	go produceData()
 	reg := prometheus.NewRegistry()
 	prometheus.WrapRegistererWith(prometheus.Labels{"serviceName": "demo-service"}, reg).MustRegister(
@@ -59,7 +59,7 @@ func produceData() {
 		})
 		requestBody := bytes.NewBuffer(body)
 		http.Post("http://"+testAddr, "application/json", requestBody)
-		log.Printf("send statusCode=%v,to %s", requestBody, testAddr)
-		time.Sleep(300 * time.Millisecond)
+		log.Printf("send statusCode=%s,to %s", body, testAddr)
+		time.Sleep(3 * time.Second)
 	}
 }

@@ -66,7 +66,8 @@ func HandleRetry(ctx context.Context, ch *amqp.Channel, d *amqp.Delivery) error 
 	logrus.Infof("retrying message %s,count=%d", d.MessageId, retryCount)
 	time.Sleep(time.Second * time.Duration(retryCount))
 	//哪里来的，消费失败了就回哪里去
-	return ch.PublishWithContext(ctx, d.Expiration, d.RoutingKey, false, false, amqp.Publishing{
+	logrus.Infof("exchange=%s,key=%s", d.Exchange, d.RoutingKey)
+	return ch.PublishWithContext(ctx, d.Exchange, d.RoutingKey, false, false, amqp.Publishing{
 		Headers:      d.Headers,
 		ContentType:  "application/json",
 		Body:         d.Body,

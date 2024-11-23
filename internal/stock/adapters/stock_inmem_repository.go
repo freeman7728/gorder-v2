@@ -72,3 +72,8 @@ func (m *MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*
 	}
 	return res, domain.NotFoundError{Missing: missing}
 }
+
+func (m *MemoryStockRepository) GetStocks(ctx context.Context, ids []string) ([]*orderpb.ItemWithQuantity, error) {
+	//TODO implement me
+	panic("implement me")
+}

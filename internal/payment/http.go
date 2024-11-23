@@ -7,7 +7,9 @@ import (
 	"github.com/freeman7728/gorder-v2/common/broker"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
 	"github.com/freeman7728/gorder-v2/payment/domain"
+	"github.com/freeman7728/gorder-v2/payment/metrics"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -28,6 +30,8 @@ func NewPaymentHandler(channel *amqp.Channel) *PaymentHandler {
 
 func (h *PaymentHandler) RegisterRoutes(c *gin.Engine) {
 	c.POST("/api/webhook", h.handleWebhook)
+	handler := promhttp.HandlerFor(metrics.Reg, promhttp.HandlerOpts{})
+	c.GET("/metrics", gin.WrapH(handler))
 }
 
 func (h *PaymentHandler) handleWebhook(c *gin.Context) {

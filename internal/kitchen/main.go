@@ -44,6 +44,7 @@ func main() {
 		_ = closeCh()
 	}()
 	forever := make(chan bool)
+	go prometheusFunc()
 	go consumer.NewConsumer(orderGRPC).Listen(ch)
 	<-forever
 }

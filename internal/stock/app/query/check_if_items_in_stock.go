@@ -46,6 +46,9 @@ var stub = map[string]string{
 }
 
 func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*orderpb.Item, error) {
+	if err := h.checkStock(ctx, query.Items); err != nil {
+		return nil, err
+	}
 	var res []*orderpb.Item
 	for _, i := range query.Items {
 		priceID, err := h.stripeAPI.GetPriceByProductID(ctx, i.ID)
@@ -59,5 +62,37 @@ func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfIte
 			PriceID:  priceID,
 		})
 	}
+	//TODO 扣库存
 	return res, nil
+}
+
+func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, items []*orderpb.ItemWithQuantity) error {
+	var ids []string
+	for _, item := range items {
+		ids = append(ids, item.ID)
+	}
+	records, err := h.stockRepo.GetStocks(ctx, ids)
+	if err != nil {
+		return err
+	}
+	idQuantityMap := make(map[string]int32)
+	for _, record := range records {
+		idQuantityMap[record.ID] += record.Quantity
+	}
+	ok := true
+	exceedDetail := make([]domain.ExceptionalItem, 0)
+	for _, item := range items {
+		if idQuantityMap[item.ID] < item.Quantity {
+			ok = false
+			exceedDetail = append(exceedDetail, domain.ExceptionalItem{
+				Id:   item.ID,
+				Want: item.Quantity,
+				Have: idQuantityMap[item.ID],
+			})
+		}
+	}
+	if ok {
+		return nil
+	}
+	return domain.ExceedStockError{FailedOn: exceedDetail}
 }

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
+	"github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/checkout/session"
 	"go.opentelemetry.io/otel"
+	"time"
 )
 
 type StripeProcessor struct {
@@ -44,6 +46,8 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 		"items":       string(marshalledItems),
 		"paymentLink": order.PaymentLink,
 	}
+	start := time.Now()
+
 	params := &stripe.CheckoutSessionParams{
 		Metadata:   metadata,
 		LineItems:  items,
@@ -51,8 +55,11 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 		SuccessURL: stripe.String(fmt.Sprintf("%s?customerID=%s&orderID=%s", successUrl, order.CustomerID, order.ID)),
 	}
 	result, err := session.New(params)
+
 	if err != nil {
 		return "", err
 	}
+	duration := time.Since(start)
+	logrus.Infof("Payment link created in %s", duration)
 	return result.URL, nil
 }
