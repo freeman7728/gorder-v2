@@ -10,7 +10,15 @@ import (
 type Repository interface {
 	GetItems(ctx context.Context, ids []string) ([]*orderpb.Item, error)
 	GetStocks(ctx context.Context, ids []string) ([]*orderpb.ItemWithQuantity, error)
-	//CheckIfItemsInStock(ctx context.Context, items []*orderpb.ItemWithQuantity) ([]*orderpb.Item, error)
+	UpdateStock(
+		ctx context.Context,
+		data []*orderpb.ItemWithQuantity,
+		updateFn func(
+			ctx context.Context,
+			existing []*orderpb.ItemWithQuantity,
+			query []*orderpb.ItemWithQuantity,
+		) ([]*orderpb.ItemWithQuantity, error),
+	) error
 }
 
 type NotFoundError struct {

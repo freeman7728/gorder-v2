@@ -5,9 +5,16 @@ import (
 	_ "github.com/freeman7728/gorder-v2/common/config"
 	"github.com/freeman7728/gorder-v2/common/decorator"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
+	"github.com/freeman7728/gorder-v2/common/handler/redis"
 	domain "github.com/freeman7728/gorder-v2/stock/domain/stock"
 	"github.com/freeman7728/gorder-v2/stock/infrastructure/integration"
 	"github.com/sirupsen/logrus"
+	"strings"
+	"time"
+)
+
+const (
+	RedisLockPrefix = "check_stock"
 )
 
 type CheckIfItemsInStock struct {
@@ -46,9 +53,14 @@ var stub = map[string]string{
 }
 
 func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*orderpb.Item, error) {
-	if err := h.checkStock(ctx, query.Items); err != nil {
+	if err := lock(ctx, getLockKey(query)); err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := unlock(ctx, getLockKey(query)); err != nil {
+			logrus.Warnf("unlock failed: %v", err)
+		}
+	}()
 	var res []*orderpb.Item
 	for _, i := range query.Items {
 		priceID, err := h.stripeAPI.GetPriceByProductID(ctx, i.ID)
@@ -62,8 +74,27 @@ func (h checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfIte
 			PriceID:  priceID,
 		})
 	}
-	//TODO 扣库存
+	//扣库存
+	if err := h.checkStock(ctx, query.Items); err != nil {
+		return nil, err
+	}
 	return res, nil
+}
+
+func getLockKey(query CheckIfItemsInStock) string {
+	ids := make([]string, 0)
+	for _, item := range query.Items {
+		ids = append(ids, item.ID)
+	}
+	return RedisLockPrefix + strings.Join(ids, "_")
+}
+
+func unlock(ctx context.Context, key string) error {
+	return redis.Del(ctx, redis.LocalClient(), key)
+}
+
+func lock(ctx context.Context, key string) error {
+	return redis.SetNX(ctx, redis.LocalClient(), key, "1", 5*time.Minute)
 }
 
 func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, items []*orderpb.ItemWithQuantity) error {
@@ -92,7 +123,24 @@ func (h checkIfItemsInStockHandler) checkStock(ctx context.Context, items []*ord
 		}
 	}
 	if ok {
-		return nil
+		return h.stockRepo.UpdateStock(ctx, items, func(
+			ctx context.Context,
+			existing []*orderpb.ItemWithQuantity,
+			query []*orderpb.ItemWithQuantity,
+		) ([]*orderpb.ItemWithQuantity, error) {
+			var newItems []*orderpb.ItemWithQuantity
+			for _, e := range existing {
+				for _, q := range query {
+					if e.ID == q.ID {
+						newItems = append(newItems, &orderpb.ItemWithQuantity{
+							ID:       e.ID,
+							Quantity: e.Quantity - q.Quantity,
+						})
+					}
+				}
+			}
+			return newItems, nil
+		})
 	}
 	return domain.ExceedStockError{FailedOn: exceedDetail}
 }

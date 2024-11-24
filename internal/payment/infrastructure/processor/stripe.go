@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/freeman7728/gorder-v2/common/genproto/orderpb"
+	"github.com/freeman7728/gorder-v2/payment/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/checkout/session"
 	"go.opentelemetry.io/otel"
+	"strconv"
 	"time"
 )
 
@@ -61,5 +63,7 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 	}
 	duration := time.Since(start)
 	logrus.Infof("Payment link created in %s", duration)
+	label := strconv.FormatInt(int64(duration), 10)
+	metrics.StripeCounter.WithLabelValues(label).Observe(float64(duration) / 1000)
 	return result.URL, nil
 }
